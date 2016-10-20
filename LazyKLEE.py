@@ -37,7 +37,8 @@ def main():
 
     print "[+] Creating container..."
     getoutput("docker rm -f lazyklee")
-    print GRAY + getoutput("docker run -d -t --name lazyklee -v %s:/home/klee/work/ klee/klee" % path) + ENDC
+    print GRAY + getoutput("docker run -d -t --ulimit='stack=-1:-1' --name lazyklee -v %s:/home/klee/work/ klee/klee" % path) + ENDC
+
 
     print "\n[+] Compiling llvm bitcode..."
     out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ ./work/%s -o out.bc" % file_name) 
