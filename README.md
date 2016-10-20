@@ -12,14 +12,8 @@ $ python LazyKLEE.py ~/CTF/defcon_2016_quals/amadhj/amadhj.c
 [+] Creating container...
 ef081e5c089fd47f0b5e8040ac001a0a6d99ec4983f4a02398e87d6cb841b61d
 
-[+] Compiling llvm bitcode...         
-./work/amadhj.c:549:5: warning: implicit declaration of function '__assert_fail' is invalid in C99 [-Wimplicit-function-declaration]
-    klee_assert(0); // PrintFlag();
-    ^
-klee_src/include/klee/klee.h:96:6: note: expanded from macro 'klee_assert'
-   : __assert_fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))    \
-     ^
-1 warning generated.
+[+] Compiling llvm bitcode...
+
 
 [+] Running KLEE...
 [+] ASSERTION triggered!
