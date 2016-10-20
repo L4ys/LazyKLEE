@@ -32,7 +32,7 @@ def main():
         print "KLEE image not found, run docker pull klee/klee first"
         exit()
 
-    path = os.path.dirname(src)
+    path = os.path.dirname(os.path.abspath(src))
     file_name = src.split("/")[-1]
 
     print "[+] Creating container..."
