@@ -26,5 +26,6 @@ object    0: data: b'kj   kr  n ZC YV kykBn  Zdk Inxi'
 
 [+] Remove container...
 ```
+Add `-i` if you need to interact with container after running klee.
 
 Ref: http://blog.l4ys.tw/2016/05/defcon-ctf-quals-2016-amadhj/
