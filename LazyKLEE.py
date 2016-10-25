@@ -13,13 +13,13 @@ def docker_exec(cmd):
     return getoutput("docker exec lazyklee " + cmd)
 
 def main():
-    if len(sys.argv) != 2:
-        print "Usage: %s <source code>" % sys.argv[0]
+    if len(sys.argv) < 2:
+        print "Usage: %s [-i] <source code>" % sys.argv[0]
         exit()
 
     print "=== LazyKLEE ==="
 
-    src = sys.argv[1]
+    src = sys.argv[-1]
     if not os.path.isfile(src):
         print "Souce code [%s] not found!" % src
         exit()
@@ -39,7 +39,6 @@ def main():
     getoutput("docker rm -f lazyklee")
     print GRAY + getoutput("docker run -d -t --ulimit='stack=-1:-1' --name lazyklee -v %s:/home/klee/work/ klee/klee" % path) + ENDC
 
-
     print "\n[+] Compiling llvm bitcode..."
     out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ ./work/%s -o out.bc" % file_name) 
     if "error:" in out:
@@ -49,16 +48,20 @@ def main():
         print GRAY + out + ENDC
 
     print "\n[+] Running KLEE..."
-    klee_out = docker_exec("klee ./out.bc")
-    if "ASSERTION FAIL" not in klee_out:
+    out = docker_exec("klee ./out.bc")
+    if "ASSERTION FAIL" not in out:
         print RED + "[!] ASSERTION not triggered..." + ENDC
-        print klee_out
+        print out
     else:
         print GREEN + "[+] ASSERTION triggered!" + ENDC
         test_case = docker_exec("ls ./klee-last/ | grep .assert.err").split(".")[0] + ".ktest"
         print docker_exec("ktest-tool ./klee-last/" + test_case)
 
-    print "\n[+] Remove container..."
+    if "-i" in sys.argv:
+        print "\n[+] Enter container:"
+        os.system("docker exec -i -t lazyklee /bin/bash")
+
+    print "\n[+] Removing container..."
     getoutput("docker rm -f lazyklee")
 
 if __name__ == "__main__":
