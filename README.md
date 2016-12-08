@@ -5,6 +5,14 @@ Lazy python wrapper of klee
 - Install Docker
 - `docker pull klee/klee`
 
+## Usage
+
+`LazyKLEE.py [-i|-o|-l|-- args to klee] <bitcode file>`
+
+`-i`: interact with container after running klee
+`-o`: use "--optimize"
+`-l`: use "--libc=uclibc --posix-runtime"
+
 ## Example
 ```sh
 $ python LazyKLEE.py ~/CTF/defcon_2016_quals/amadhj/amadhj.c
@@ -26,6 +34,5 @@ object    0: data: b'kj   kr  n ZC YV kykBn  Zdk Inxi'
 
 [+] Remove container...
 ```
-Add `-i` if you need to interact with container after running klee.
 
 Ref: http://blog.l4ys.tw/2016/05/defcon-ctf-quals-2016-amadhj/

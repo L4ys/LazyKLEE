@@ -14,8 +14,12 @@ def docker_exec(cmd):
 
 def main():
     if len(sys.argv) < 2:
-        print "Usage: %s [-i] <source code>" % sys.argv[0]
+        print "Usage: %s [-o|-i|-l|-- args to klee] <source code>" % sys.argv[0]
         exit()
+
+    optimize = "-o" in sys.argv
+    interact = "-i" in sys.argv
+    uclibc = "-l" in sys.argv
 
     print "=== LazyKLEE ==="
 
@@ -37,18 +41,30 @@ def main():
 
     print "[+] Creating container..."
     getoutput("docker rm -f lazyklee")
-    print GRAY + getoutput("docker run -d -t --ulimit='stack=-1:-1' --name lazyklee -v %s:/home/klee/work/ klee/klee" % path) + ENDC
+    getoutput("docker run -d -t --ulimit='stack=-1:-1' --name lazyklee -v %s:/home/klee/work/ klee/klee" % path)
 
-    print "\n[+] Compiling llvm bitcode..."
+    print "[+] Compiling llvm bitcode..."
     out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ ./work/%s -o out.bc" % file_name) 
     if "error:" in out:
         print RED + out + ENDC
+        if interact:
+            print "\n[+] Enter container:"
+            os.system("docker exec -i -t lazyklee /bin/bash")
+
         exit()
     else:
         print GRAY + out + ENDC
 
-    print "\n[+] Running KLEE..."
-    out = docker_exec("klee ./out.bc")
+    print "[+] Running KLEE..."
+    cmd = "klee ./out.bc "
+    if optimize:
+        cmd += "--optimize "
+    if uclibc:
+        cmd += "--libc=uclibc --posix-runtime "
+    if "--" in sys.argv and sys.argv[-1] != "--":
+        cmd += " ".join(sys.argv[sys.argv.index("--")+1:])
+    print GRAY + cmd + ENDC
+    out = docker_exec(cmd)
     if "ASSERTION FAIL" not in out:
         print RED + "[!] ASSERTION not triggered..." + ENDC
         print out
@@ -57,11 +73,11 @@ def main():
         test_case = docker_exec("ls ./klee-last/ | grep .assert.err").split(".")[0] + ".ktest"
         print docker_exec("ktest-tool ./klee-last/" + test_case)
 
-    if "-i" in sys.argv:
-        print "\n[+] Enter container:"
+    if interact:
+        print "[+] Enter container:"
         os.system("docker exec -i -t lazyklee /bin/bash")
 
-    print "\n[+] Removing container..."
+    print "[+] Removing container..."
     getoutput("docker rm -f lazyklee")
 
 if __name__ == "__main__":
