@@ -1,5 +1,5 @@
 # LazyKLEE
-Lazy python wrapper of klee
+Lazy python wrapper of KLEE for solving CTF challenges.
 
 ## Installation
 - Install Docker
@@ -9,9 +9,9 @@ Lazy python wrapper of klee
 
 `LazyKLEE.py [-i|-o|-l|-- args to klee] <bitcode file>`
 
-`-i`: interact with container after running klee
-`-o`: use "--optimize"
-`-l`: use "--libc=uclibc --posix-runtime"
+- `-i`: interact with container after running KLEE
+- `-o`: Run KLEE with "--optimize"
+- `-l`: Run KLEE with "--libc=uclibc --posix-runtime"
 
 ## Example
 ```sh
