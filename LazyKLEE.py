@@ -9,13 +9,19 @@ RED = "\033[91m"
 GRAY = "\033[90m"
 ENDC = "\033[0m"
 
+def usage():
+    print "Usage: %s [-o|-i|-l|-- args to klee] <source code>" % sys.argv[0]
+    print "   -i: interact with container after running KLEE"
+    print "   -o: Run KLEE with --optimize"
+    print "   -l: Run KLEE with --libc=uclibc --posix-runtime"
+    exit()
+
 def docker_exec(cmd):
     return getoutput("docker exec lazyklee " + cmd)
 
 def main():
-    if len(sys.argv) < 2:
-        print "Usage: %s [-o|-i|-l|-- args to klee] <source code>" % sys.argv[0]
-        exit()
+    if len(sys.argv) < 2 or "-h" in sys.argv:
+        usage()
 
     optimize = "-o" in sys.argv
     interact = "-i" in sys.argv
@@ -44,11 +50,20 @@ def main():
     getoutput("docker run -d -t --ulimit='stack=-1:-1' --name lazyklee -v %s:/home/klee/work/ klee/klee" % path)
 
     print "[+] Compiling llvm bitcode..."
-    out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ ./work/%s -o out.bc" % file_name) 
+    clang_include = ""
+    with open(src, "r") as f:
+        code = f.read()
+    if "klee.h" not in code:
+        clang_include += "-include klee/klee.h "
+    if "assert.h" not in code:
+        clang_include += "-include assert.h "
+
+    out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ %s ./work/%s -o out.bc" % (clang_include, file_name))
     if "error:" in out:
-        print RED + out + ENDC
+        out = out.replace("error", RED + "error" + ENDC)
+        print out
         if interact:
-            print "\n[+] Enter container:"
+            print "\n[+] Entering container..."
             os.system("docker exec -i -t lazyklee /bin/bash")
 
         exit()
@@ -74,7 +89,7 @@ def main():
         print docker_exec("ktest-tool ./klee-last/" + test_case)
 
     if interact:
-        print "[+] Enter container:"
+        print "\n[+] Entering container..."
         os.system("docker exec -i -t lazyklee /bin/bash")
 
     print "[+] Removing container..."
