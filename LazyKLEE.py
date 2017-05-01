@@ -58,7 +58,7 @@ def main():
     if "assert.h" not in code:
         clang_include += "-include assert.h "
 
-    out = docker_exec("clang -emit-llvm -c -g -I klee_src/include/ %s ./work/%s -o out.bc" % (clang_include, file_name))
+    out = docker_exec("clang -emit-llvm -c -g -DKLEE -I klee_src/include/ %s ./work/%s -o out.bc" % (clang_include, file_name))
     if "error:" in out:
         out = out.replace("error", RED + "error" + ENDC)
         print out
