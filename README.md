@@ -1,5 +1,5 @@
 # LazyKLEE
-Lazy python wrapper of KLEE for solving CTF challenges.
+Lazy python wrapper of [KLEE](https://klee.github.io/) for solving CTF challenges.
 
 ## Installation
 - Install Docker
@@ -28,8 +28,14 @@ optional arguments:
                         additional arguments for KLEE
   -a ARGS, --args ARGS  additional arguments for target program
 ```
+## How
 
-## Example
+1. Decompile binary to source code with hex-rays
+2. Include `defs.h` from plugins folder of ida pro
+3. Replace `read(stdin, input, sizeof(input));` with `klee_make_symbolic(input, sizeof(input), "input");`
+4. Replace `print_flag();` with `klee_assert(0);`
+5. `LazyKLEE.py solve.c`, add `-libc` if any libc functions used
+
 ```sh
 $ LazyKLEE.py ~/CTF/defcon_2017/crackme1/solve.c
 === LazyKLEE ===
@@ -48,3 +54,9 @@ $ LazyKLEE.py ~/CTF/defcon_2017/crackme1/solve.c
     object    0: data: b'yes and his hands shook with ex\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 [+] Removing container...
 ```
+
+## Examples
+- [DEFCON QUALS 2016: amadhj](example/DEFCON-QUALS-2016-amadhj)
+- [DEFCON QUALS 2017: crackme1](example/DEFCON-QUALS-2017-crackme1)
+- [SECCON CTF 2017 printf-machine](example/SECCON-CTF-2017-printf-machine)
+- [TMCTF 2017: REV400 stage2](example/TMCTF-2017-REV400)
