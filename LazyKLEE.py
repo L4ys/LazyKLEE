@@ -17,13 +17,7 @@ def indent(text, width=4):
 def docker_exec(cmd):
     if args.verbose:
         print indent(GRAY + "$ " + cmd + ENDC)
-    ret, out = getstatusoutput("docker exec lazyklee %s" % cmd)
-    if ret:
-        print indent(RED + "Failed" + ENDC)
-        print indent(GRAY + out + ENDC)
-        exit()
-    return out
-
+    return getstatusoutput("docker exec lazyklee %s" % cmd)
 
 def run_container(path):
     print "[+] Creating container... "
@@ -50,14 +44,13 @@ def compile_bitcode(file_name, out_name):
         cmd += args.clang_args
     cmd += "work/%s -o %s" % (file_name, out_name)
 
-    out = docker_exec(cmd)
-    out = out.replace("warning", YELLOW + "warning" + GRAY)
-    out = out.replace("error", RED + "error" + GRAY)
-    if "error:" in out:
+    ret, out = docker_exec(cmd)
+    out = out.replace("warning:", YELLOW + "warning" + GRAY + ":")
+    out = out.replace("error:", RED + "error" + GRAY + ":")
+    if out:
         print indent(GRAY + out + ENDC)
+    if ret:
         exit()
-    elif out:
-        print indent(GRAY + out + ENDC)
 
 def run_klee(out_name):
     print "[+] Running KLEE..."
@@ -74,26 +67,27 @@ def run_klee(out_name):
     if args.args:
         cmd += " " + args.args
 
-    out = docker_exec(cmd)
+    ret, out = docker_exec(cmd)
     out = out.replace("WARNING:", YELLOW + "WARNING" + GRAY + ":")
     out = out.replace("WARNING ONCE:", YELLOW + "WARNING ONCE" + GRAY + ":")
     out = out.replace("ERROR:", RED + "ERROR" + GRAY + ":")
     out = GRAY + out + ENDC
-    if "ASSERTION FAIL" not in out:
-        print indent(out)
-        print "[!] " + RED + "ASSERTION not triggered..." + ENDC
-    else:
+    if "ASSERTION FAIL" in out:
         if args.verbose:
             print indent(out)
         print "[!] " + GREEN + "ASSERTION triggered!" + ENDC
 
-        test_case = docker_exec("ls ./klee-last/ | grep .assert.err").split(".")[0] + ".ktest"
+        _, out = docker_exec("ls ./klee-last/ | grep .assert.err")
+        test_case = out.split(".")[0] + ".ktest"
         cmd = "ktest-tool "
         if args.write_ints:
             cmd += "--write-ints "
         cmd += "./klee-last/%s" % test_case
-        out = docker_exec(cmd)
+        _, out = docker_exec(cmd)
         print indent(out)
+    else:
+        print indent(out)
+        print "[!] " + RED + "ASSERTION not triggered..." + ENDC
 
 def cleanup():
     if args.interact:
