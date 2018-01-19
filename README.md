@@ -31,22 +31,20 @@ optional arguments:
 
 ## Example
 ```sh
-$ LazyKLEE.py ~/ctf/defcon_2016_quals/amadhj/amadhj.c
+$ LazyKLEE.py ~/CTF/defcon_2017/crackme1/solve.c
 === LazyKLEE ===
 [+] Creating container...
 [+] Compiling llvm bitcode...
     Auto include klee/klee.h
     Auto include assert.h
-    ...
+
 [+] Running KLEE...
 [!] ASSERTION triggered!
-    ktest file : './klee-last/test000002.ktest'
-    args       : ['amadhj.bc']
+    ktest file : './klee-last/test000032.ktest'
+    args       : ['solve.bc']
     num objects: 1
     object    0: name: b'input'
-    object    0: size: 32
-    object    0: data: b'J XFAMFZi f wh yr ASQWcPCe_DjpT '
+    object    0: size: 80
+    object    0: data: b'yes and his hands shook with ex\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 [+] Removing container...
 ```
-
-Ref: http://blog.l4ys.tw/2016/05/defcon-ctf-quals-2016-amadhj/
