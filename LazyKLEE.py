@@ -12,7 +12,7 @@ YELLOW = "\033[93m"
 ENDC = "\033[0m"
 
 def indent(text, width=4):
-    return " " * width+ text.replace("\n", "\n" + " " * width)
+    return " " * width + text.replace("\n", "\n" + " " * width)
 
 def docker_exec(cmd):
     if args.verbose:
@@ -30,19 +30,19 @@ def run_container(path):
 
 def compile_bitcode(file_name, out_name):
     print "[+] Compiling llvm bitcode..."
-    cmd = "clang -emit-llvm -c -g -DKLEE -I klee_src/include/ "
+    cmd = "clang -emit-llvm -c -g -DKLEE -I klee_src/include/"
 
     with open(args.src, "r") as f:
         code = f.read()
     if "klee.h" not in code:
-        cmd += "-include klee/klee.h "
+        cmd += " -include klee/klee.h"
         print indent(GREEN + "Auto include klee/klee.h" + ENDC)
     if "assert.h" not in code:
-        cmd += "-include assert.h "
+        cmd += " -include assert.h"
         print indent(GREEN + "Auto include assert.h" + ENDC)
     if args.clang_args:
-        cmd += args.clang_args
-    cmd += "work/%s -o %s" % (file_name, out_name)
+        cmd += " " + args.clang_args
+    cmd += " work/%s -o %s" % (file_name, out_name)
 
     ret, out = docker_exec(cmd)
     out = out.replace("warning:", YELLOW + "warning" + GRAY + ":")
@@ -54,15 +54,15 @@ def compile_bitcode(file_name, out_name):
 
 def run_klee(out_name):
     print "[+] Running KLEE..."
-    cmd = "klee -check-overshift=0 -check-div-zero=0 "
+    cmd = "klee -check-overshift=0 -check-div-zero=0"
     if args.optimize:
-        cmd += "-optimize "
+        cmd += " -optimize"
     if args.libc:
-        cmd += "-libc=uclibc "
+        cmd += " -libc=uclibc"
     if args.posix:
-        cmd += "-posix-runtime "
+        cmd += " -posix-runtime"
     if args.klee_args:
-        cmd += args.klee_args
+        cmd += " " + args.klee_args
     cmd += " " + out_name
     if args.args:
         cmd += " " + args.args
@@ -137,6 +137,6 @@ def main():
     compile_bitcode(file_name, out_name)
     run_klee(out_name)
 
-
 if __name__ == "__main__":
     main()
+
