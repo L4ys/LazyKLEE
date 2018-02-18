@@ -31,10 +31,10 @@ optional arguments:
 ## How
 
 1. Decompile binary to source code with hex-rays
-2. Include `defs.h` from plugins folder of ida pro
+2. Include `defs.h` from plugins folder of IDA Pro
 3. Replace `read(stdin, input, sizeof(input));` with `klee_make_symbolic(input, sizeof(input), "input");`
 4. Replace `print_flag();` with `klee_assert(0);`
-5. `LazyKLEE.py solve.c`, add `-libc` if any libc functions used
+5. `LazyKLEE.py solve.c`, add `--libc` if any libc functions used
 
 ```sh
 $ LazyKLEE.py ~/CTF/defcon_2017/crackme1/solve.c
