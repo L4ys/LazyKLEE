@@ -119,7 +119,6 @@ def main():
     parser.add_argument("-o", "--optimize", help="run KLEE with -optimize", action="store_true")
     parser.add_argument("-l", "--libc", help="run KLEE with -libc=uclibc", action="store_true")
     parser.add_argument("-p", "--posix", help="run KLEE with -posix-runtime", action="store_true")
-    parser.add_argument("-w", "--write-ints", help="convert 4-byte sequences to integers in ktest-tool", action="store_true")
     parser.add_argument("-c", "--clang-args", help="additional arguments for clang")
     parser.add_argument("-k", "--klee-args", help="additional arguments for KLEE")
     parser.add_argument("-a", "--args", help="additional arguments for target program")
