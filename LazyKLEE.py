@@ -63,7 +63,6 @@ def run_klee(out_name):
     cmd = "/home/klee/klee_build/bin/klee"
     cmd += " -check-overshift=0"
     cmd += " -check-div-zero=0"
-    cmd += " -exit-on-error"
     cmd += " -exit-on-error-type=Assert"
 
     if args.optimize:
