@@ -20,9 +20,9 @@ def docker_exec(cmd):
     return getstatusoutput("docker exec lazyklee %s" % cmd)
 
 def run_container(path):
-    print "[+] Creating container... "
+    print "[+] Creating container... (%s)" % args.image
     getoutput("docker rm -f lazyklee")
-    ret, out = getstatusoutput("docker run -d -t --ulimit='stack=-1:-1' --name=lazyklee -v %s:/home/klee/work/:ro klee/klee" % path)
+    ret, out = getstatusoutput("docker run -d -t --ulimit='stack=-1:-1' --name=lazyklee -v %s:/home/klee/work/:ro %s" % (path, args.image))
     if ret:
         print RED + "Failed" + ENDC
         print indent(out)
@@ -30,7 +30,12 @@ def run_container(path):
 
 def compile_bitcode(file_name, out_name):
     print "[+] Compiling llvm bitcode..."
-    cmd = "clang -emit-llvm -c -g -DKLEE -I klee_src/include/"
+
+    ret, clang_path = docker_exec("bash -c 'which clang || which /tmp/llvm-*install*/bin/clang'")
+    if ret or not clang_path:
+        print RED + "Cannot get clang binary path: %s" % clang_path
+
+    cmd = "%s -emit-llvm -c -g -DKLEE -I klee_src/include/" % clang_path
 
     with open(args.src, "r") as f:
         code = f.read()
@@ -54,7 +59,13 @@ def compile_bitcode(file_name, out_name):
 
 def run_klee(out_name):
     print "[+] Running KLEE..."
-    cmd = "klee -check-overshift=0 -check-div-zero=0"
+
+    cmd = "/home/klee/klee_build/bin/klee"
+    cmd += " -check-overshift=0"
+    cmd += " -check-div-zero=0"
+    cmd += " -exit-on-error"
+    cmd += " -exit-on-error-type=Assert"
+
     if args.optimize:
         cmd += " -optimize"
     if args.libc:
@@ -79,7 +90,7 @@ def run_klee(out_name):
 
         _, out = docker_exec("ls ./klee-last/ | grep .assert.err")
         test_case = out.split(".")[0] + ".ktest"
-        cmd = "ktest-tool "
+        cmd = "/home/klee/klee_build/bin/ktest-tool "
         if args.write_ints:
             cmd += "--write-ints "
         cmd += "./klee-last/%s" % test_case
@@ -104,6 +115,7 @@ def main():
     parser.add_argument("src", help="source code")
     parser.add_argument("-v", "--verbose", help="show verbose message", action="store_true")
     parser.add_argument("-i", "--interact", help="interact with container after running KLEE", action="store_true")
+    parser.add_argument("-g", "--image", help="KLEE docker image name", default="klee/klee")
     parser.add_argument("-o", "--optimize", help="run KLEE with -optimize", action="store_true")
     parser.add_argument("-l", "--libc", help="run KLEE with -libc=uclibc", action="store_true")
     parser.add_argument("-p", "--posix", help="run KLEE with -posix-runtime", action="store_true")
