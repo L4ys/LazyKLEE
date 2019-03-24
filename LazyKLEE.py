@@ -90,8 +90,6 @@ def run_klee(out_name):
         _, out = docker_exec("ls ./klee-last/ | grep .assert.err")
         test_case = out.split(".")[0] + ".ktest"
         cmd = "/home/klee/klee_build/bin/ktest-tool "
-        if args.write_ints:
-            cmd += "--write-ints "
         cmd += "./klee-last/%s" % test_case
         _, out = docker_exec(cmd)
         print indent(out)
