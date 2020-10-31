@@ -3,7 +3,10 @@
 import argparse
 import atexit
 import os
-from commands import getoutput, getstatusoutput
+try:
+    from subprocess import getoutput, getstatusoutput
+except:
+    from commands import getoutput, getstatusoutput
 
 GRAY = "\033[90m"
 RED = "\033[91m"
@@ -16,49 +19,49 @@ def indent(text, width=4):
 
 def docker_exec(cmd):
     if args.verbose:
-        print indent(GRAY + "$ " + cmd + ENDC)
-    return getstatusoutput("docker exec lazyklee %s" % cmd)
+        print(indent(GRAY + "$ " + cmd + ENDC))
+    return getstatusoutput("docker exec lazyklee {}".format(cmd))
 
 def run_container(path):
-    print "[+] Creating container... (%s)" % args.image
+    print("[+] Creating container... ({})".format(args.image))
     getoutput("docker rm -f lazyklee")
-    ret, out = getstatusoutput("docker run -d -t --ulimit='stack=-1:-1' --name=lazyklee -v %s:/home/klee/work/:ro %s" % (path, args.image))
+    ret, out = getstatusoutput("docker run -d -t --ulimit='stack=-1:-1' --name=lazyklee -v {}:/home/klee/work/:ro {}".format(path, args.image))
     if ret:
-        print RED + "Failed" + ENDC
-        print indent(out)
+        print(RED + "Failed" + ENDC)
+        print(indent(out))
         exit()
 
 def compile_bitcode(file_name, out_name):
-    print "[+] Compiling llvm bitcode..."
+    print("[+] Compiling llvm bitcode...")
 
     ret, clang_path = docker_exec("bash -c 'which clang || which /tmp/llvm-*install*/bin/clang'")
     if ret or not clang_path:
-        print RED + "Cannot get clang binary path: %s" % clang_path
+        print(RED + "Cannot get clang binary path: {}".format(clang_path))
 
-    cmd = "%s -emit-llvm -c -g -DKLEE -I klee_src/include/" % clang_path
+    cmd = "{} -emit-llvm -c -g -DKLEE -I klee_src/include/".format(clang_path)
 
     with open(args.src, "r") as f:
         code = f.read()
     if "klee.h" not in code:
         cmd += " -include klee/klee.h"
-        print indent(GREEN + "Auto include klee/klee.h" + ENDC)
+        print(indent(GREEN + "Auto include klee/klee.h" + ENDC))
     if "assert.h" not in code:
         cmd += " -include assert.h"
-        print indent(GREEN + "Auto include assert.h" + ENDC)
+        print(indent(GREEN + "Auto include assert.h" + ENDC))
     if args.clang_args:
         cmd += " " + args.clang_args
-    cmd += " work/%s -o %s" % (file_name, out_name)
+    cmd += " work/{} -o {}".format(file_name, out_name)
 
     ret, out = docker_exec(cmd)
     out = out.replace("warning:", YELLOW + "warning" + GRAY + ":")
     out = out.replace("error:", RED + "error" + GRAY + ":")
     if out:
-        print indent(GRAY + out + ENDC)
+        print(indent(GRAY + out + ENDC))
     if ret:
         exit()
 
 def run_klee(out_name):
-    print "[+] Running KLEE..."
+    print("[+] Running KLEE...")
 
     cmd = "/home/klee/klee_build/bin/klee"
     cmd += " -check-overshift=0"
@@ -84,26 +87,26 @@ def run_klee(out_name):
     out = GRAY + out + ENDC
     if "ASSERTION FAIL" in out:
         if args.verbose:
-            print indent(out)
-        print "[!] " + GREEN + "ASSERTION triggered!" + ENDC
+            print(indent(out))
+        print("[!] " + GREEN + "ASSERTION triggered!" + ENDC)
 
         _, out = docker_exec("ls ./klee-last/ | grep .assert.err")
         test_case = out.split(".")[0] + ".ktest"
         cmd = "/home/klee/klee_build/bin/ktest-tool "
-        cmd += "./klee-last/%s" % test_case
+        cmd += "./klee-last/{}".format(test_case)
         _, out = docker_exec(cmd)
-        print indent(out)
+        print(indent(out))
     else:
-        print indent(out)
-        print "[!] " + RED + "ASSERTION not triggered..." + ENDC
+        print(indent(out))
+        print("[!] " + RED + "ASSERTION not triggered..." + ENDC)
 
 def cleanup():
     if args.interact:
-        print "\n[+] Entering container..."
+        print("\n[+] Entering container...")
         os.system("docker exec -it lazyklee /bin/bash")
 
     if getoutput("docker ps -a | grep lazyklee"):
-        print "[+] Removing container..."
+        print("[+] Removing container...")
         getoutput("docker rm -f lazyklee")
 
 def main():
@@ -121,18 +124,18 @@ def main():
     parser.add_argument("-a", "--args", help="additional arguments for target program")
     args = parser.parse_args()
 
-    print "=== LazyKLEE ==="
+    print("=== LazyKLEE ===")
 
     if not os.path.isfile(args.src):
-        print "Souce code [%s] not found!" % args.src
+        print("Souce code [{}] not found!".format(args.src))
         exit()
 
     if not getoutput("which docker"):
-        print "docker not found, install docker first"
+        print("docker not found, install docker first")
         exit()
 
     if not getoutput("docker images | grep klee"):
-        print "KLEE image not found, run `docker pull klee/klee` first"
+        print("KLEE image not found, run `docker pull klee/klee` first")
         exit()
 
     path = os.path.dirname(os.path.abspath(args.src))
